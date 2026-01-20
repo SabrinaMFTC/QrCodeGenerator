@@ -1,4 +1,4 @@
-# QrCodeGenerator
+# QR Code Generator
 
 A **Spring Boot** application that generates **QR Codes** and stores them in an **AWS S3 bucket**.
 The project is fully containerized with **Docker** for easy local execution and deployment.
