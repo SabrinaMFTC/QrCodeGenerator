@@ -85,7 +85,12 @@ POST http://localhost:8080/qrcode
 
 * A QR Code is generated and uploaded to **AWS S3**
 * The API returns a **URL**
+
+![img01](assets/asset01.png)
+
 * Opening this URL in your browser displays the QR Code image
+
+![img01](assets/asset02.png)
 
 ### cURL example
 
