@@ -1,7 +1,7 @@
-# QR Code Generator
+# QR Code Generator API
 
-A **Spring Boot** application that generates **QR Codes** and stores them in an **AWS S3 bucket**.
-The project is fully containerized with **Docker** for easy local execution and deployment.
+A **Spring Boot** application that generates **QR Code images** from text or URLs and stores them in an **Amazon S3 bucket**.
+The application is containerized with **Docker** and designed to run consistently across environments.
 
 **Credits:** Fernanda Kipper Dev
 
@@ -9,13 +9,25 @@ The project is fully containerized with **Docker** for easy local execution and 
 
 ## 🚀 Overview
 
-This application:
+This service provides a REST API that:
 
-* Generates QR Codes from text or URLs
+* Generates QR Code images from text or URLs
 * Uploads the generated image to **Amazon S3**
-* Returns a URL to access the QR Code
+* Returns a publicly accessible URL for each generated QR Code
 
-All configuration is handled via environment variables.
+The application follows best practices such as externalized configuration and cloud-ready design principles.
+
+---
+
+## 🏗️ Architecture Highlights
+
+* Stateless REST API
+* Object storage via Amazon S3
+* Public asset delivery directly from S3
+* Configuration via environment variables
+* Docker-based runtime isolation
+
+This approach avoids streaming files through the backend, improving scalability and performance.
 
 ---
 
@@ -23,51 +35,110 @@ All configuration is handled via environment variables.
 
 * Java
 * Spring Boot
-* Docker
-* AWS S3
 * Maven
+* Docker
+* Amazon S3
+* AWS SDK
 
 ---
 
 ## 📦 Prerequisites
 
 * Docker
-* AWS account with an S3 bucket
-* AWS credentials with S3 write permission
+* AWS account
+* An existing Amazon S3 bucket
+* AWS credentials with write permission to the bucket
 
-> ⚠️ Check [here](https://www.kipperdev.com.br/blog/guia-completo-para-configurar-aws-no-intellij/) how to setup AWS credentials.
+> 🔐 For local development, credentials may be configured via environment variables or AWS profiles. See this [guide](https://www.kipperdev.com.br/blog/guia-completo-para-configurar-aws-no-intellij/).
 
 ---
 
 ## ▶️ Running the application
 
-### 1️⃣ Clone the repository
+### Step 1 - Amazon S3 Bucket Configuration
 
-### 2️⃣ Create a `.env` file
+1. Open **AWS Console → S3**
+2. Create a bucket with:
+   * A globally unique name
+   * The desired AWS region
+3. Enable encryption (recommended)
+4. Complete bucket creation
+
+Since the API returns **direct URLs**, the objects must be publicly readable.
+
+⚠️ This bucket **must only store public assets** (QR Code images).
+
+Add the following **bucket policy** (replace the bucket name):
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "PublicReadGetObject",
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::your_bucket_name/*"
+        }
+    ]
+}
+```
+
+#### What this policy allows
+
+* Public read access (`GET`) to objects
+* No permission to upload, delete, or list objects
+
+### Step 2 - Clone the repository
+
+```bash
+git clone <repository-url>
+cd qrcode-generator
+```
+
+### Step 3 - Create a `.env` file
 
 ```env
 AWS_ACCESS_KEY_ID=your_access_key
 AWS_SECRET_ACCESS_KEY=your_secret_key
-AWS_REGION=us-east-1
+AWS_REGION=your_aws_region
 AWS_S3_BUCKET=your_bucket_name
 ```
 
-> ⚠️ Do not commit this file.
+⚠️ **Important**
 
-### 3️⃣ Build and run with Docker
+* Never commit this file
+* Do not expose credentials in version control
+* In production, prefer **IAM roles** instead of static credentials
+
+
+### Step 4 - Build and run with Docker
 
 ```bash
 docker build -t qrcode-generator:latest .
 docker run --env-file .env -p 8080:8080 qrcode-generator:latest
 ```
 
+The application will start on:
+
+```
+http://localhost:8080
+```
+
 ---
 
-## 🌐 Testing the API
+## 🌐 API Usage
 
 You can test the application using **Postman**, **Insomnia**, or **cURL**.
 
 ### Endpoint
+
+```
+POST /qrcode
+```
+
+Example:
 
 ```
 POST http://localhost:8080/qrcode
@@ -77,14 +148,15 @@ POST http://localhost:8080/qrcode
 
 ```json
 {
-  "text": "https://fernandakipper.com/links"
+  "text": "https://example.com"
 }
 ```
 
-### Result
+### Response
 
-* A QR Code is generated and uploaded to **AWS S3**
-* The API returns a **URL**
+* A QR Code image is generated
+* The image is uploaded to Amazon S3
+* The API returns a **public URL** pointing directly to the image
 
 ![img01](assets/asset01.png)
 
@@ -97,13 +169,17 @@ POST http://localhost:8080/qrcode
 ```bash
 curl -X POST http://localhost:8080/qrcode \
   -H "Content-Type: application/json" \
-  -d '{"text":"https://fernandakipper.com/links"}'
+  -d '{"text":"https://example.com"}'
 ```
 
 ---
 
-## 📌 Notes
+## 📌 Intended Use
 
-* Intended for learning and demonstration purposes
-* Keep AWS credentials secure
-* For production, prefer AWS IAM roles over static credentials
+This project is intended for:
+
+* Learning and experimentation
+* Backend portfolio demonstrations
+* Cloud storage integration examples
+
+It can be extended to production usage with additional security hardening and observability.
